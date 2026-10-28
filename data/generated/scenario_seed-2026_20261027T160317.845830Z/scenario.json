@@ -1,0 +1,503 @@
+{
+  "project": "SmartCity ANPR Trajectory Simulation",
+  "synthetic_data_only": true,
+  "random_seed": 2026,
+  "settings": {
+    "num_vehicles": 24,
+    "num_cameras": 8,
+    "simulation_duration_hours": 3.0,
+    "random_seed": 2026,
+    "ocr_error_rate": 0.12,
+    "detection_failure_rate": 0.08,
+    "camera_detection_failure_rates": {
+      "CAM-03": 0.22
+    },
+    "reid_noise_level": 0.15,
+    "similar_appearance_rate": 0.18,
+    "unexpected_order_rate": 0.12,
+    "embedding_dim": 128,
+    "min_route_length": 2,
+    "max_route_length": 6,
+    "multi_frame_enabled": true,
+    "max_observations_per_camera": 3
+  },
+  "vehicles_generated": 24,
+  "detections_generated": 61,
+  "detections_evaluated": 61,
+  "evaluation_scope": "The dashboard's evaluation subset; see detections_evaluated.",
+  "detections_tracked": 61,
+  "trajectory_scope_by_method": {
+    "combined": "Full generated run; see detections_tracked.",
+    "plate_only": "Evaluation subset; see detections_evaluated.",
+    "reid_only": "Evaluation subset; see detections_evaluated."
+  },
+  "association_record_scope": "Evaluation subset for each method.",
+  "trajectories_by_method": {
+    "combined": 24,
+    "plate_only": 24,
+    "reid_only": 9
+  },
+  "evaluation_metrics": {
+    "combined": {
+      "method": "combined",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "false_match_rate": 0.0,
+      "missed_association_rate": 0.0,
+      "total_detections": 61,
+      "total_ground_truth_vehicles": 24,
+      "total_reconstructed_trajectories": 24,
+      "correct_associations": 37,
+      "incorrect_associations": 0,
+      "missed_associations": 0,
+      "unmatched_detections": 3,
+      "trajectory_completeness": 1.0,
+      "correct_transitions_pct": 1.0,
+      "per_vehicle_details": [
+        {
+          "trajectory_id": "TRAJ-DET-0000042",
+          "majority_vehicle": "V-0016",
+          "purity": 1.0,
+          "num_detections": 5,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000014",
+          "majority_vehicle": "V-0005",
+          "purity": 1.0,
+          "num_detections": 4,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000010",
+          "majority_vehicle": "V-0004",
+          "purity": 1.0,
+          "num_detections": 4,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000027",
+          "majority_vehicle": "V-0010",
+          "purity": 1.0,
+          "num_detections": 4,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000032",
+          "majority_vehicle": "V-0012",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000047",
+          "majority_vehicle": "V-0018",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000053",
+          "majority_vehicle": "V-0020",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000050",
+          "majority_vehicle": "V-0019",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000057",
+          "majority_vehicle": "V-0022",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000004",
+          "majority_vehicle": "V-0002",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000023",
+          "majority_vehicle": "V-0009",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000029",
+          "majority_vehicle": "V-0011",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000006",
+          "majority_vehicle": "V-0003",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000037",
+          "majority_vehicle": "V-0015",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000034",
+          "majority_vehicle": "V-0013",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000044",
+          "majority_vehicle": "V-0017",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000059",
+          "majority_vehicle": "V-0023",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000061",
+          "majority_vehicle": "V-0024",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000020",
+          "majority_vehicle": "V-0008",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000018",
+          "majority_vehicle": "V-0007",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000016",
+          "majority_vehicle": "V-0006",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000035",
+          "majority_vehicle": "V-0014",
+          "purity": 1.0,
+          "num_detections": 1,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000001",
+          "majority_vehicle": "V-0001",
+          "purity": 1.0,
+          "num_detections": 1,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000054",
+          "majority_vehicle": "V-0021",
+          "purity": 1.0,
+          "num_detections": 1,
+          "is_pure": true
+        }
+      ]
+    },
+    "plate_only": {
+      "method": "plate_only",
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "false_match_rate": 0.0,
+      "missed_association_rate": 0.0,
+      "total_detections": 61,
+      "total_ground_truth_vehicles": 24,
+      "total_reconstructed_trajectories": 24,
+      "correct_associations": 37,
+      "incorrect_associations": 0,
+      "missed_associations": 0,
+      "unmatched_detections": 3,
+      "trajectory_completeness": 1.0,
+      "correct_transitions_pct": 1.0,
+      "per_vehicle_details": [
+        {
+          "trajectory_id": "TRAJ-DET-0000042",
+          "majority_vehicle": "V-0016",
+          "purity": 1.0,
+          "num_detections": 5,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000014",
+          "majority_vehicle": "V-0005",
+          "purity": 1.0,
+          "num_detections": 4,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000010",
+          "majority_vehicle": "V-0004",
+          "purity": 1.0,
+          "num_detections": 4,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000027",
+          "majority_vehicle": "V-0010",
+          "purity": 1.0,
+          "num_detections": 4,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000032",
+          "majority_vehicle": "V-0012",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000047",
+          "majority_vehicle": "V-0018",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000053",
+          "majority_vehicle": "V-0020",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000050",
+          "majority_vehicle": "V-0019",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000057",
+          "majority_vehicle": "V-0022",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000004",
+          "majority_vehicle": "V-0002",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000023",
+          "majority_vehicle": "V-0009",
+          "purity": 1.0,
+          "num_detections": 3,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000029",
+          "majority_vehicle": "V-0011",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000006",
+          "majority_vehicle": "V-0003",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000037",
+          "majority_vehicle": "V-0015",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000034",
+          "majority_vehicle": "V-0013",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000044",
+          "majority_vehicle": "V-0017",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000059",
+          "majority_vehicle": "V-0023",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000061",
+          "majority_vehicle": "V-0024",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000020",
+          "majority_vehicle": "V-0008",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000018",
+          "majority_vehicle": "V-0007",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000016",
+          "majority_vehicle": "V-0006",
+          "purity": 1.0,
+          "num_detections": 2,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000035",
+          "majority_vehicle": "V-0014",
+          "purity": 1.0,
+          "num_detections": 1,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000001",
+          "majority_vehicle": "V-0001",
+          "purity": 1.0,
+          "num_detections": 1,
+          "is_pure": true
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000054",
+          "majority_vehicle": "V-0021",
+          "purity": 1.0,
+          "num_detections": 1,
+          "is_pure": true
+        }
+      ]
+    },
+    "reid_only": {
+      "method": "reid_only",
+      "precision": 0.3269,
+      "recall": 0.4595,
+      "f1_score": 0.382,
+      "false_match_rate": 0.6731,
+      "missed_association_rate": 0.5405,
+      "total_detections": 61,
+      "total_ground_truth_vehicles": 24,
+      "total_reconstructed_trajectories": 9,
+      "correct_associations": 17,
+      "incorrect_associations": 35,
+      "missed_associations": 20,
+      "unmatched_detections": 0,
+      "trajectory_completeness": 0.4595,
+      "correct_transitions_pct": 0.3269,
+      "per_vehicle_details": [
+        {
+          "trajectory_id": "TRAJ-DET-0000042",
+          "majority_vehicle": "V-0004",
+          "purity": 0.3,
+          "num_detections": 10,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000020",
+          "majority_vehicle": "V-0005",
+          "purity": 0.3333,
+          "num_detections": 9,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000041",
+          "majority_vehicle": "V-0024",
+          "purity": 0.2857,
+          "num_detections": 7,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000054",
+          "majority_vehicle": "V-0013",
+          "purity": 0.2857,
+          "num_detections": 7,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000016",
+          "majority_vehicle": "V-0016",
+          "purity": 0.4286,
+          "num_detections": 7,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000010",
+          "majority_vehicle": "V-0003",
+          "purity": 0.3333,
+          "num_detections": 6,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000018",
+          "majority_vehicle": "V-0012",
+          "purity": 0.3333,
+          "num_detections": 6,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000027",
+          "majority_vehicle": "V-0010",
+          "purity": 0.8,
+          "num_detections": 5,
+          "is_pure": false
+        },
+        {
+          "trajectory_id": "TRAJ-DET-0000019",
+          "majority_vehicle": "V-0020",
+          "purity": 0.5,
+          "num_detections": 4,
+          "is_pure": false
+        }
+      ]
+    }
+  },
+  "notes": [
+    "Ground-truth identifiers are included for synthetic evaluation only.",
+    "OCR and appearance embeddings are simulated, not trained-model output.",
+    "Repeated runs with identical settings and seed generate the same scenario records; export folder timestamps differ."
+  ]
+}
