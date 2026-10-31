@@ -7,7 +7,7 @@ import { PRESETS, type Preset } from '../src/ui/presets';
 import { InferenceCache, traceTarget, type Trace } from '../src/track/link';
 import { inferRoute } from '../src/track/routes';
 import { bestCamera, modelFromHyps } from '../src/track/suggest';
-import { runBatch } from '../src/track/eval';
+import { camerasSaved, runBatch } from '../src/track/eval';
 
 const g = new Graph({ name: 'kor', ...JSON.parse(readFileSync('public/data/koramangala.json', 'utf8')) });
 let failures = 0;
@@ -50,6 +50,7 @@ async function run(p: Preset) {
   if (p.autoBatch) {
     const b = await runBatch(g, e.cameraList().map(c => g.nodeIdx.get(c.nodeId)!), 1 - p.miss, p.seed, { nTrips: +(process.env.TRIPS ?? 200) });
     out.chart = b.chart.map(r => [r.cameras, +r.random.toFixed(2), +r.smart.toFixed(2)]);
+    out.saved = camerasSaved(b.chart, e.cameras.size, b.currentSmart.avgRoutes, b.currentRandom.avgRoutes);
     out.currentRandom = +b.currentRandom.avgRoutes.toFixed(2); out.currentSmart = +b.currentSmart.avgRoutes.toFixed(2);
   }
   return out;
@@ -72,6 +73,7 @@ for (const p of PRESETS) {
   }
   if (p.id === 3) {
     check(a.chart.every((r: number[]) => r[2] < r[1]), `smart < random at every count ${JSON.stringify(a.chart)}`);
+    console.log(`   INFO  cameras saved: ${JSON.stringify(a.saved)}`);
     check(a.currentSmart < a.currentRandom, `same count (10): smart ${a.currentSmart} < random ${a.currentRandom}`);
   }
   if (p.id === 4) {

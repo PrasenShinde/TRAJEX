@@ -1,4 +1,5 @@
-import type { Batch, EvalResult } from '../track/eval';
+import { useState } from 'react';
+import { camerasSaved, type Batch, type EvalResult } from '../track/eval';
 
 export type LiveMetrics = {
   cameras: number; junctions: number;
@@ -14,25 +15,50 @@ const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%
 function Chart({ data, current }: { data: Batch['chart']; current: number }) {
   const W = 360, H = 118, L = 34, B = 20, T = 8, R = 10;
   const xs = data.map(d => d.cameras);
-  const maxY = Math.max(1, ...data.flatMap(d => [d.random, d.smart]));
+  const maxY = Math.max(1, ...data.flatMap(d => [d.randomMax, d.smart]));
   const x = (v: number) => L + ((v - Math.min(...xs)) / (Math.max(...xs) - Math.min(...xs) || 1)) * (W - L - R);
   const y = (v: number) => T + (1 - v / maxY) * (H - T - B);
   const line = (k: 'random' | 'smart') => data.map((d, i) => `${i ? 'L' : 'M'}${x(d.cameras).toFixed(1)},${y(d[k]).toFixed(1)}`).join(' ');
+  const band = data.map((d, i) => `${i ? 'L' : 'M'}${x(d.cameras).toFixed(1)},${y(d.randomMax).toFixed(1)}`).join(' ')
+    + [...data].reverse().map(d => ` L${x(d.cameras).toFixed(1)},${y(d.randomMin).toFixed(1)}`).join('') + ' Z';
   return (
     <svg width={W} height={H} role="img" aria-label="Average possible routes versus number of cameras, random versus smart placement">
       <line x1={L} y1={H - B} x2={W - R} y2={H - B} stroke="#2a313c" />
       <line x1={L} y1={T} x2={L} y2={H - B} stroke="#2a313c" />
       {[0, 0.5, 1].map(f => <text key={f} x={L - 4} y={y(maxY * f) + 3} fill="#8b95a5" fontSize="9" textAnchor="end">{(maxY * f).toFixed(0)}</text>)}
       {data.map(d => <text key={d.cameras} x={x(d.cameras)} y={H - 6} fill="#8b95a5" fontSize="9" textAnchor="middle">{d.cameras}</text>)}
+      <path d={band} fill="#f87171" opacity="0.18"><title>random placement: min–max over 5 random seeds</title></path>
       <path d={line('random')} stroke="#f87171" fill="none" strokeWidth="2" />
       <path d={line('smart')} stroke="#4ade80" fill="none" strokeWidth="2" />
       {data.map(d => <circle key={'r' + d.cameras} cx={x(d.cameras)} cy={y(d.random)} r="3" fill="#f87171" />)}
       {data.map(d => <circle key={'s' + d.cameras} cx={x(d.cameras)} cy={y(d.smart)} r="3" fill="#4ade80" />)}
-      <text x={W - R} y={T + 8} fill="#f87171" fontSize="10" textAnchor="end">random</text>
+      <text x={W - R} y={T + 8} fill="#f87171" fontSize="10" textAnchor="end">random (mean of 5, band = min–max)</text>
       <text x={W - R} y={T + 20} fill="#4ade80" fontSize="10" textAnchor="end">smart</text>
       <text x={L + 4} y={T + 8} fill="#8b95a5" fontSize="9">avg possible routes ↓ vs cameras →</text>
       {current >= Math.min(...xs) && current <= Math.max(...xs) && <line x1={x(current)} y1={T} x2={x(current)} y2={H - B} stroke="#4cc9f0" strokeDasharray="3 3" />}
     </svg>
+  );
+}
+
+const rupees = (x: number) => '₹' + Math.round(x).toLocaleString('en-IN');
+
+function SavedHeadline({ r }: { r: NonNullable<BatchState['result']> }) {
+  const [cost, setCost] = useState(''); // optional; empty by default — no invented figure
+  const n = r.current.cameras;
+  const cs = camerasSaved(r.chart, n, r.currentSmart.avgRoutes, r.currentRandom.avgRoutes);
+  const c = parseFloat(cost);
+  return (
+    <div className="card" style={{ marginBottom: 6 }}>
+      {cs.status === 'ok' && <b>Smart placement with {n} cameras = random with {cs.m.toFixed(1)} cameras ({cs.saved.toFixed(1)} cameras saved)</b>}
+      {cs.status === 'beyond' && <b>Smart placement with {n} cameras beats random even with {cs.maxTested} cameras (more than {(cs.maxTested - n)} saved; not extrapolated)</b>}
+      {cs.status === 'none' && <b>With {n} cameras, smart placement is no better than random here (0 cameras saved)</b>}
+      <div className="row" style={{ marginTop: 4, alignItems: 'center' }}>
+        <label style={{ margin: 0 }}>cost per camera (₹)</label>
+        <input type="number" min={0} placeholder="optional" value={cost} onChange={e => setCost(e.target.value)} style={{ width: 90 }} />
+        {cs.status === 'ok' && c > 0 && <span className="ok">Total saved: {rupees(cs.saved * c)}</span>}
+        {cs.status === 'beyond' && c > 0 && <span className="ok">Total saved: more than {rupees((cs.maxTested - n) * c)}</span>}
+      </div>
+    </div>
   );
 }
 
@@ -57,6 +83,7 @@ export function BottomStrip(p: { live: LiveMetrics; batch: BatchState; onRun: ()
       <div style={{ minWidth: 330 }}>
         <h3>Batch evaluation ({p.nTrips} random trips)</h3>
         <button className="primary" disabled={batch.running} onClick={p.onRun}>{batch.running ? `Running… ${Math.round(batch.progress * 100)}% ${batch.label}` : 'Run batch evaluation'}</button>
+        {r && <div style={{ marginTop: 4 }}><SavedHeadline r={r} /></div>}
         {r && (
           <table style={{ marginTop: 4 }}>
             <thead><tr><th>placement ({r.current.cameras} cams)</th><th>avg routes</th><th>route acc.</th><th>true rank</th><th>top-1</th></tr></thead>

@@ -51,6 +51,15 @@ Built: `src/ui/presets.ts` (presets 1–5, all five), one-click loading (`Demo p
 P5: twin rejected for impossible travel, 0 wrong links). UI checked with headless-Chrome screenshots for presets 2, 4, 5.
 `README.md` written (how to run, UI guide, what each preset shows, honesty notes).
 
+## Improvement 1 — Cameras saved: DONE (awaiting your test)
+Built: `camerasSaved()` in `src/track/eval.ts` (linear interpolation on the random-placement mean curve, using the chart counts plus the exact-N point;
+never extrapolates: if random does not match smart within 25 cameras it says "beats random even with 25", and if smart is no better it says 0 saved).
+Random baseline is now the **mean of 5 random seeds** per camera count (`RANDOM_SEEDS`); chart has a light min–max band. Metrics strip shows the headline
+"Smart placement with N cameras = random with M cameras (saved)" plus an optional "cost per camera (₹)" input (empty by default; total shown only if filled).
+Rehearsal (all 5 presets pass; preset 3 now 5-seed mean): smart@10 = 22.2 routes vs random mean 30.1@10 and 25.8@25, so the headline reads
+"beats random even with 25 cameras" (>15 saved, not extrapolated). On the grid the interpolated M/saved numbers appear.
+Tests: 29 pass (6 new in `tests/eval.test.ts`). Batch is ~2.5× slower (5 random seeds): expect a few minutes on Koramangala.
+
 ## Overall status
 All 5 phases done; nothing from the cut list was cut. No git commands were run.
 Known issues / limitations:

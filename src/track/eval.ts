@@ -101,8 +101,49 @@ export async function evaluatePlacement(g: Graph, trips: Trip[], cameraNodes: nu
   };
 }
 
-export type ChartPoint = { cameras: number; random: number; smart: number };
+/** `random` is the mean over RANDOM_SEEDS random placements; `randomMin`/`randomMax` give the range across them. */
+export type ChartPoint = { cameras: number; random: number; randomMin: number; randomMax: number; smart: number };
 export type Batch = { current: EvalResult; chart: ChartPoint[]; suggestedFirst: string | null };
+
+export const RANDOM_SEEDS = 5;
+
+export type CamerasSaved =
+  | { status: 'ok'; n: number; m: number; saved: number }
+  | { status: 'beyond'; n: number; maxTested: number } // random never matches smart within the tested camera counts
+  | { status: 'none'; n: number; m: number | null }; // smart is no better than random with the same cameras (or no data)
+
+/**
+ * How many randomly placed cameras are needed to match smart placement's average effective routes with `n` cameras?
+ * Linear interpolation on the random-mean curve (chart points plus the exact-n point). Never extrapolates beyond the tested counts.
+ */
+export function camerasSaved(chart: { cameras: number; random: number }[], n: number, smartAvg: number, randomAtN?: number): CamerasSaved {
+  const pts = chart.map(c => ({ cameras: c.cameras, v: c.random }));
+  if (randomAtN !== undefined && !pts.some(p => p.cameras === n)) pts.push({ cameras: n, v: randomAtN });
+  pts.sort((a, b) => a.cameras - b.cameras);
+  if (!pts.length || !(smartAvg >= 0)) return { status: 'none', n, m: null };
+  let m: number | null = null;
+  for (let i = 0; i < pts.length; i++) {
+    if (pts[i].v <= smartAvg) {
+      if (i === 0) m = pts[0].cameras;
+      else {
+        const a = pts[i - 1], b = pts[i];
+        m = a.cameras + ((a.v - smartAvg) / (a.v - b.v)) * (b.cameras - a.cameras);
+      }
+      break;
+    }
+  }
+  if (m === null) return { status: 'beyond', n, maxTested: pts[pts.length - 1].cameras };
+  return m > n + 1e-9 ? { status: 'ok', n, m, saved: m - n } : { status: 'none', n, m };
+}
+
+function meanEval(rs: EvalResult[]): EvalResult {
+  const avg = (f: (r: EvalResult) => number) => rs.reduce((a, r) => a + f(r), 0) / rs.length;
+  return {
+    cameras: rs[0].cameras, trips: rs[0].trips, segments: Math.round(avg(r => r.segments)),
+    avgRoutes: avg(r => r.avgRoutes), avgFeasible: avg(r => r.avgFeasible), routeAccuracy: avg(r => r.routeAccuracy),
+    meanRank: avg(r => r.meanRank), foundPct: avg(r => r.foundPct), top1Pct: avg(r => r.top1Pct),
+  };
+}
 
 const tick = () => new Promise<void>(res => setTimeout(res, 0));
 let lastYield = 0;
@@ -130,22 +171,27 @@ export async function runBatch(
   const models = await buildModels(g, train);
   const kMax = Math.max(...counts, current.length);
   const smartOrder = greedyPlacement(g, models, kMax, p);
-  const rnd = mulberry32(seed + 303);
-  const randomOrder = [...Array(g.N).keys()].sort(() => rnd() - 0.5);
+  const randomOrders = Array.from({ length: RANDOM_SEEDS }, (_, k) => {
+    const rnd = mulberry32(seed + 303 + k);
+    return [...Array(g.N).keys()].sort(() => rnd() - 0.5);
+  });
 
-  const total = counts.length * 2 + 3;
+  const total = 1 + RANDOM_SEEDS + 1 + counts.length * (RANDOM_SEEDS + 1);
   let done = 0;
   const step = async (label: string) => { done++; onProgress?.(done / total, label); await tick(); };
 
   const cur = await evaluatePlacement(g, test, current, p, seed); await step('current cameras');
   const k = current.length;
-  const currentRandom = await evaluatePlacement(g, test, randomOrder.slice(0, k), p, seed); await step('same count, random');
+  const rr: EvalResult[] = [];
+  for (let i = 0; i < RANDOM_SEEDS; i++) { rr.push(await evaluatePlacement(g, test, randomOrders[i].slice(0, k), p, seed)); await step(`same count, random ${i + 1}/${RANDOM_SEEDS}`); }
+  const currentRandom = meanEval(rr);
   const currentSmart = await evaluatePlacement(g, test, smartOrder.slice(0, k), p, seed); await step('same count, smart');
   const chart: ChartPoint[] = [];
   for (const c of counts) {
-    const r = await evaluatePlacement(g, test, randomOrder.slice(0, c), p, seed); await step(`random ${c}`);
+    const vals: number[] = [];
+    for (let i = 0; i < RANDOM_SEEDS; i++) { vals.push((await evaluatePlacement(g, test, randomOrders[i].slice(0, c), p, seed)).avgRoutes); await step(`random ${c} (${i + 1}/${RANDOM_SEEDS})`); }
     const s = await evaluatePlacement(g, test, smartOrder.slice(0, c), p, seed); await step(`smart ${c}`);
-    chart.push({ cameras: c, random: r.avgRoutes, smart: s.avgRoutes });
+    chart.push({ cameras: c, random: vals.reduce((a, b) => a + b, 0) / vals.length, randomMin: Math.min(...vals), randomMax: Math.max(...vals), smart: s.avgRoutes });
   }
   return { current: cur, currentRandom, currentSmart, chart, suggestedFirst: smartOrder.length ? g.nodes[smartOrder[0]].id : null };
 }
