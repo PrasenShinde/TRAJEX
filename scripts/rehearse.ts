@@ -8,6 +8,8 @@ import { InferenceCache, traceTarget, type Trace } from '../src/track/link';
 import { inferRoute } from '../src/track/routes';
 import { bestCamera, modelFromHyps } from '../src/track/suggest';
 import { camerasSaved, runBatch } from '../src/track/eval';
+import { batchSig, captionFor, gatherFacts, presetCams, type Precomputed } from '../src/ui/demoFacts';
+import { existsSync } from 'node:fs';
 
 const g = new Graph({ name: 'kor', ...JSON.parse(readFileSync('public/data/koramangala.json', 'utf8')) });
 let failures = 0;
@@ -84,6 +86,15 @@ for (const p of PRESETS) {
     check(a.rejected.some((r: string) => r.includes('impossible travel')), `look-alike rejected: ${a.rejected[0]}`);
     check(a.wrongLinks === 0, 'no look-alike sighting was linked');
   }
+}
+console.log('\nDemo captions (from computed numbers):');
+const pre: Precomputed | null = existsSync('public/data/precomputed.json') ? JSON.parse(readFileSync('public/data/precomputed.json', 'utf8')) : null;
+for (const p of PRESETS) {
+  const ent = pre?.presets[p.id] ?? null;
+  const ok = !p.autoBatch || (ent !== null && ent.sig === batchSig('kor', p.seed, presetCams(g, p), p.miss, 200).replace(/^kor/, 'Bengaluru – Koramangala'));
+  if (p.autoBatch) check(ok, 'precomputed.json has a valid entry for preset ' + p.id);
+  const cap = captionFor(gatherFacts(g, p, ok ? ent : null), p);
+  console.log(`   ${p.id}. ${cap}`);
 }
 console.log(failures ? `\n${failures} CHECK(S) FAILED` : '\nALL PRESET CHECKS PASSED');
 process.exit(failures ? 1 : 0);

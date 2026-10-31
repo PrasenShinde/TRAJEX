@@ -16,6 +16,10 @@ import { buildModels, routeShare, runBatch, sampleTrips } from '../track/eval';
 import { bestCamera, greedyPlacement, modelFromHyps, type SegModel, type Suggestion } from '../track/suggest';
 import { inferRoute } from '../track/routes';
 import { randomCameraNodes } from '../sim/placement';
+import { batchSig, captionFor, demoKey, gatherFacts, presetCams, type Facts, type Precomputed } from './demoFacts';
+
+let preCache: Promise<Precomputed | null> | null = null;
+const loadPrecomputed = () => (preCache ??= fetch(`${import.meta.env.BASE_URL}data/precomputed.json`).then(r => (r.ok ? r.json() : null)).catch(() => null));
 
 const fmtT = (t: number) => {
   const m = Math.floor(t / 60), s = Math.floor(t % 60);
@@ -70,6 +74,9 @@ export function App() {
   const [presetId, setPresetId] = useState<number | null>(null);
   const [wantSuggest, setWantSuggest] = useState(false);
   const [wantBatch, setWantBatch] = useState(false);
+  const [demo, setDemo] = useState<{ step: number } | null>(null);
+  const [facts, setFacts] = useState<Facts | null>(null);
+  const demoRef = useRef(demo); demoRef.current = demo;
   const modelCache = useRef<{ key: string; models: SegModel[] } | null>(null);
 
   const engine = useMemo(() => {
@@ -100,8 +107,32 @@ export function App() {
     setOcr(pr.ocr); setPartial(pr.partial); setMiss(pr.miss); setWarm(pr.warm);
     setSelected(pr.car); setMode(pr.mode); setReveal(false); setShowReach(false);
     setPlaying(false); setPresetId(pr.id); setNonce(n => n + 1);
-    setWantSuggest(!!pr.autoSuggest); setWantBatch(!!pr.autoBatch);
+    setWantSuggest(!!pr.autoSuggest); setWantBatch(false);
+    setFacts(null);
+    const pre = await loadPrecomputed();
+    const entry = pre?.presets[pr.id] ?? null;
+    const gm = new Graph(m);
+    const valid = entry && entry.sig === batchSig(m.name, pr.seed, presetCams(gm, pr), pr.miss, N_TRIPS) ? entry : null;
+    if (pr.autoBatch) {
+      if (valid) setBatch({ running: false, progress: 1, label: '', source: 'precomputed', generated: valid.generated, result: valid.result });
+      else if (!demoRef.current) setWantBatch(true); // no saved result: fall back to a live run (not during the demo)
+    }
+    setTimeout(() => setFacts(gatherFacts(gm, pr, valid)), 30);
   };
+  const demoStep = (step: number) => { setDemo({ step }); applyPreset(PRESETS[step]); };
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => {
+      const d = demoRef.current;
+      if (!d || (ev.target as HTMLElement)?.matches?.('input,textarea,select')) return;
+      const r = demoKey(ev.key, d.step, PRESETS.length);
+      if (!r) return;
+      ev.preventDefault();
+      if (r.exit) setDemo(null); else if (r.step !== d.step) demoStep(r.step);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => { const id = +(Q.get('preset') ?? 0); const pr = PRESETS.find(x => x.id === id); if (pr) applyPreset(pr); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const setCameraCount = (n: number) => {
@@ -173,7 +204,7 @@ export function App() {
     setBatch(b => ({ ...b, running: true, progress: 0, label: 'starting' }));
     const cur = engine.cameraList().map(c => g.nodeIdx.get(c.nodeId)!);
     const result = await runBatch(g, cur, 1 - miss, seed, { nTrips: N_TRIPS, onProgress: (f, l) => setBatch(b => ({ ...b, progress: f, label: l })) });
-    setBatch({ running: false, progress: 1, label: '', result });
+    setBatch({ running: false, progress: 1, label: '', source: 'live', result });
   };
 
   useEffect(() => {
@@ -221,6 +252,7 @@ export function App() {
     <div className="app">
       <div className="panel left">
         <h3>Demo presets</h3>
+        <div className="row"><button className={demo ? 'on' : 'primary'} onClick={() => (demo ? setDemo(null) : demoStep(0))}>{demo ? 'Exit demo' : '▶ Demo (guided)'}</button></div>
         <div className="row">
           {PRESETS.map(pr => (
             <button key={pr.id} className={presetId === pr.id ? 'on' : ''} onClick={() => applyPreset(pr)} title={pr.says}>{pr.id}. {pr.title}</button>
@@ -280,6 +312,17 @@ export function App() {
         engine={engine} playing={playing} speed={speed} overlays={ov.under} topOverlays={ov.over} selectedCarId={selCar ? selCar.car.id : null} suggestedNode={activeSugg?.s?.node ?? null}
         onJunctionClick={onJunctionClick} onCarClick={(id) => { setSelected(id); setReveal(false); }} onTick={() => setTick(t => t + 1)}
       >
+        {demo && (() => { const pr = PRESETS[demo.step]; const ready = facts?.id === pr.id; return (
+          <div className="demo-card">
+            <div className="dim">Step {demo.step + 1} / {PRESETS.length} · {pr.title}</div>
+            <div>{ready ? captionFor(facts, pr) : 'Loading scenario…'}</div>
+            <div className="row" style={{ marginTop: 6 }}>
+              <button disabled={demo.step === 0} onClick={() => demoStep(demo.step - 1)}>← Back</button>
+              <button className="primary" disabled={demo.step === PRESETS.length - 1} onClick={() => demoStep(demo.step + 1)}>Next →</button>
+              <button onClick={() => setDemo(null)}>Exit</button>
+              <span className="dim">← / → keys</span>
+            </div>
+          </div>); })()}
         {activeSugg?.s && (
           <div className="floating">
             <b>Suggested camera: {activeSugg.s.node}</b> <span className="ok">+{activeSugg.s.gainPct.toFixed(0)}% certainty</span>

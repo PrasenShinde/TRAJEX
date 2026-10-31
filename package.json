@@ -10,6 +10,7 @@
     "test": "vitest run",
     "rehearse": "tsx scripts/rehearse.ts",
     "batch": "tsx scripts/batch.ts",
+    "precompute": "tsx scripts/precompute.ts",
     "find-presets": "tsx scripts/find_presets.ts",
     "export-osm": ".venv/bin/python scripts/export_osm.py"
   },

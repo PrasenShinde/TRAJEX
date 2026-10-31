@@ -60,6 +60,16 @@ Rehearsal (all 5 presets pass; preset 3 now 5-seed mean): smart@10 = 22.2 routes
 "beats random even with 25 cameras" (>15 saved, not extrapolated). On the grid the interpolated M/saved numbers appear.
 Tests: 29 pass (6 new in `tests/eval.test.ts`). Batch is ~2.5× slower (5 random seeds): expect a few minutes on Koramangala.
 
+## Improvement 2 — Guided demo mode + precomputed batch: DONE (awaiting your test)
+Built: **Demo (guided)** button → caption card over the map ("Step n / 5", Back / Next / Exit; → = Next, ← = Back, Esc = exit; ignored while typing in a field).
+Each caption is written by `captionFor()` (`src/ui/demoFacts.ts`) from numbers `gatherFacts()` computes on a fresh engine (routes, true rank, suggested junction + gain,
+routes after adding it, ours-vs-naive links, rejection reason, batch smart vs random, cameras saved) — no hard-coded figures; unit-tested with fake facts.
+**Precompute (replaces the plan's live batch at demo start):** `npm run precompute` (~2.5 min) runs the batch for each preset that needs it (preset 3) and writes
+`public/data/precomputed.json` (scenario signature + result). Preset 3 and the demo load it instantly; if the signature doesn't match (settings changed) it is ignored
+and, outside the demo, a live batch runs instead. Chart/metrics show a small "precomputed (saved date, 200 trips) — not run live" label; the button becomes
+**Recompute live (takes minutes)** and the label switches to "computed live". If the file is missing the demo caption for preset 3 says so.
+Re-run `npm run precompute` after changing preset 3 or the evaluation code. Tests: 34 pass (5 new in `tests/demo.test.ts`).
+
 ## Overall status
 All 5 phases done; nothing from the cut list was cut. No git commands were run.
 Known issues / limitations:

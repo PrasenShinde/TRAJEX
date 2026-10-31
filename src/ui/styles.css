@@ -31,3 +31,5 @@ th { color: var(--dim); font-weight: 500; }
 .metric .big { font-size: 22px; font-weight: 600; }
 .card { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 6px 0; }
 .floating { position: absolute; top: 10px; left: 10px; z-index: 5; background: #161b22ee; border: 1px solid #facc15; border-radius: 6px; padding: 8px 10px; }
+
+.demo-card { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 6; width: min(560px, 90%); background: #161b22f2; border: 1px solid #4cc9f0; border-radius: 6px; padding: 8px 12px; }

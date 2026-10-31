@@ -8,7 +8,7 @@ export type LiveMetrics = {
   linkOurs: { precision: number; recall: number; n: number } | null;
   linkNaive: { precision: number; recall: number; n: number } | null;
 };
-export type BatchState = { running: boolean; progress: number; label: string; result: (Batch & { currentRandom: EvalResult; currentSmart: EvalResult }) | null };
+export type BatchState = { running: boolean; progress: number; label: string; source?: 'precomputed' | 'live'; generated?: string; result: (Batch & { currentRandom: EvalResult; currentSmart: EvalResult }) | null };
 
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`);
 
@@ -82,7 +82,8 @@ export function BottomStrip(p: { live: LiveMetrics; batch: BatchState; onRun: ()
       </div>
       <div style={{ minWidth: 330 }}>
         <h3>Batch evaluation ({p.nTrips} random trips)</h3>
-        <button className="primary" disabled={batch.running} onClick={p.onRun}>{batch.running ? `Running… ${Math.round(batch.progress * 100)}% ${batch.label}` : 'Run batch evaluation'}</button>
+        <button className="primary" disabled={batch.running} onClick={p.onRun}>{batch.running ? `Running… ${Math.round(batch.progress * 100)}% ${batch.label}` : batch.source === 'precomputed' ? 'Recompute live (takes minutes)' : 'Run batch evaluation'}</button>
+        {r && batch.source && <span className="dim" style={{ marginLeft: 6, fontSize: 11 }}>{batch.source === 'precomputed' ? 'precomputed' : 'computed live'}</span>}
         {r && <div style={{ marginTop: 4 }}><SavedHeadline r={r} /></div>}
         {r && (
           <table style={{ marginTop: 4 }}>
@@ -95,7 +96,8 @@ export function BottomStrip(p: { live: LiveMetrics; batch: BatchState; onRun: ()
           </table>
         )}
       </div>
-      <div>{r ? <Chart data={r.chart} current={r.current.cameras} /> : <span className="dim">Run the batch evaluation to see avg possible routes vs number of cameras (random vs smart).</span>}</div>
+      <div>{r ? <><Chart data={r.chart} current={r.current.cameras} />
+        {batch.source && <div className="dim" style={{ fontSize: 10 }}>{batch.source === 'precomputed' ? `precomputed (saved ${batch.generated?.slice(0, 10) ?? ''}, ${r.current.trips} trips) — not run live` : `computed live (${r.current.trips} trips)`}</div>}</> : <span className="dim">Run the batch evaluation to see avg possible routes vs number of cameras (random vs smart).</span>}</div>
     </div>
   );
 }
