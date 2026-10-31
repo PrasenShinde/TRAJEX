@@ -1,160 +1,72 @@
-# SmartCity ANPR Trajectory Simulation
+# Sparse-Camera Vehicle Tracking Simulator
 
-An end-to-end **synthetic** simulation of camera detections, cross-camera
-association, trajectory reconstruction, and evaluation. It does not process
-real camera footage and does not run trained OCR, detection, or Re-ID models.
+SIH 2026 · PS 26127 (BEL) — a browser-only demo of the *method*: tracking a vehicle across a city with few cameras.
 
-## Run the dashboard
+**Idea.** A car is seen at camera A and later at camera D; in between it could have taken many roads.
+*Fewer cameras → more possible routes → less certainty.* The tracker combines the road graph, travel time, direction,
+"cameras that did **not** see the car", and fuzzy plate matching to narrow the possibilities and keep linking the car even when plates are misread.
+The simulator also suggests the best next camera and shows that **where** cameras go matters as much as **how many**.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-streamlit run app.py
+## Run it
+
+```bash
+npm install
+npm run dev          # http://localhost:5173  (works offline; road network is bundled)
+npm run build        # type-check + production build into dist/
+npm test             # unit tests (plate folding, route scoring, k-shortest paths, suggestion, engine)
+npm run rehearse     # headless run of all 5 demo presets (twice each) with pass/fail checks (~3 min, includes the 200-trip batch)
 ```
 
-Use the sidebar to configure the vehicle count, simulation window, random seed,
-and synthetic error levels, then start the simulation. The dashboard compares
-plate-only, synthetic Re-ID-only, and combined association against the
-simulation's ground truth.
+Everything is deterministic from the **seed** shown in the left panel (same seed → same cars, same demo).
+No backend, no database, no basemap tiles: roads are drawn from JSON on a dark background.
 
-Regenerate the checked-in example scenario without starting the dashboard:
+Optional — regenerate the Koramangala road data (already included in `public/data/koramangala.json`):
 
-```powershell
-python -m src.utils.generate_example_scenario
+```bash
+python3 -m venv .venv && .venv/bin/pip install osmnx     # osmnx 2.x
+npm run export-osm                                       # downloads from OpenStreetMap (public Overpass servers can be busy; the script retries)
 ```
 
-The included example uses 24 synthetic vehicles, an eight-camera network, and
-a fixed seed. Ground-truth columns are explicitly marked evaluation-only.
+## Using the app
 
-## Pipeline
+* **Left panel** – demo presets, map (Grid city / Koramangala), play/pause, speed 1–30×, seed, number of cars, look-alike toggle,
+  camera count, **Random** / **Smart** placement, **Suggest next camera**, and the camera-mistake sliders (OCR error, partial reads, miss rate).
+* **Map** – click any junction to add/remove a camera (cyan ring). Click a car (or search a plate on the right) to track it.
+  Amber = route hypotheses (opacity ∝ probability, thickest = best), cyan haze = "where could it be now", green ring = linked sighting,
+  red dot = rejected look-alike, green dashed = true route (after **Reveal**), pulsing yellow = suggested camera.
+  Adding or removing a camera *replays the same traffic* ("what-if"), so the new camera immediately has sightings.
+* **Right panel** – the tracked car, the sighting timeline (✓ linked / ✗ rejected, with the reason), and for each segment the ranked routes
+  with probabilities, the number of feasible routes and the *effective* number of routes (`exp(entropy)`). **Our method / Naive** switches
+  between fuzzy+travel-time linking and exact plate matching.
+* **Bottom strip** – live metrics, and **Run batch evaluation** (200 random trips: current cameras vs the same number placed randomly vs smartly,
+  plus a chart of average possible routes vs number of cameras for random vs smart placement; ~10 s on the grid, ~1 min on Koramangala).
 
-1. `config/settings.py` defines simulation settings and the hypothetical
-   SmartCity camera layout.
-2. `src/camera_network/` builds a directed graph and scores transitions using
-   expected travel times and normalized outgoing-edge transition probabilities.
-3. `src/simulation/` generates synthetic vehicles, graph-constrained routes,
-   and imperfect camera detections.
-4. `src/anpr/` and `src/reid/` simulate plate OCR and appearance embeddings.
-5. `src/association/` scores candidate sighting pairs and uses a maximum-weight
-   assignment to build non-branching trajectories without using ground-truth
-   IDs as matching evidence. Large tracking runs use conservative camera/time
-   candidate windows and solve disconnected assignment components separately.
-   Combined evidence weights are normalized before scoring; an all-zero weight
-   set cannot produce a match.
-6. `src/trajectory/` labels observed, inferred, and uncertain segments.
-7. `src/mapping/` renders camera and trajectory views with Folium.
-8. `src/evaluation/` compares reconstructed associations to synthetic truth.
-9. `app.py` presents controls, maps, detection and association views, and
-   evaluation results in Streamlit.
-10. `src/storage/trajectory_store.py` stores run detections and reconstructed
-    camera-coordinate sightings in SQLite for later search.
+## Demo presets (Koramangala, seed 2026)
 
-Simulation settings and association weights are validated when constructed.
-The association engine also rejects duplicate detection IDs, unknown cameras,
-invalid confidences/timestamps, malformed embeddings, and unsupported method
-names with a specific `ValueError` before scoring begins.
+| # | Preset | What it shows | What to click |
+|---|---|---|---|
+| 1 | **Two cameras** | Only 2 cameras: the tracked car could have taken 40 feasible routes (≈23 effective) and our top-1 guess is wrong (true route is rank 7). *Sparse = blind.* | Read the routes; press **Reveal true route**. |
+| 2 | **Add the right camera** | Same scenario; the suggested camera (junction n231, "+16% certainty") pulses on the map. Adding it collapses the uncertainty to ≈2 and ≈4 effective routes and the true route becomes rank 1 on both pieces. | **Add suggested camera**, then **Reveal true route**. |
+| 3 | **Random vs smart** | Same camera count, random vs smart placement: smart is better at every count (e.g. ≈22 vs ≈30 effective routes with 10 cameras; ≈16 vs ≈28 with 25). | Wait for the batch to finish (auto-starts, ~1 min); read the table and chart. |
+| 4 | **Misread plate** | The middle camera misreads the plate (`KA01UG3544` read as `KA01UG35A4`). Our method folds look-alike characters (4/A…) and links all 3 sightings; naive exact matching loses the middle one. | Click **Naive (exact plate)** and compare the timelines. |
+| 5 | **Look-alike** | A same-type, same-colour car with a one-character-different plate (`KA05YL0047` vs `KA05YE0047`) is seen 48 s after our car — but the fastest route from the previous camera needs 369 s, so it is rejected for *impossible travel*. | Read the red ✗ row in the timeline; the red dot on the map is the twin. |
 
-## Project layout
+`npm run rehearse` loads each preset twice and checks these claims and that both runs are identical. The scenarios were found with `npm run find-presets`.
 
-```text
-app.py
-requirements.txt
-README.md
-config/                 Settings and default camera layout
-data/generated/         Example scenario and per-run exports
-src/anpr/               Synthetic OCR
-src/association/        Similarity scoring and association engine
-src/camera_network/     Directed graph and camera-link model
-src/evaluation/         Synthetic-ground-truth metrics
-src/mapping/            Folium maps
-src/reid/                Synthetic appearance embeddings
-src/simulation/         City, vehicle, and detection generation
-src/trajectory/         Trajectory reconstruction
-src/utils/              Logging helpers
-tests/                  Unit tests for core modules
-```
+## How it works (short)
 
-## Current limitations
+* `src/sim/` – deterministic engine: cars follow shortest paths on perturbed travel times (speed factor 0.6–1.0, 0–20 s junction delays), Bengaluru plates
+  (`KA DD LL NNNN`), ~5% look-alike plates, cameras with detection probability, OCR misreads (0↔D, 8↔B, 5↔S, 2↔Z, 6↔G, 7↔T, 4↔A), partial reads, misses.
+* `src/track/` – the tracker. It only reads the sightings log (never the true routes or hidden car ids).
+  `link.ts` (§6.1 linking, rejection reasons, naive mode), `routes.ts` (§6.2 Yen K=40 routes, time fit, negative evidence, entropy),
+  `reach.ts` (§6.3 reachable cloud), `suggest.ts` (§6.4 expected-entropy camera suggestion, greedy placement), `eval.ts` (§7 batch evaluation).
+* `scripts/` – `export_osm.py` (road data), `rehearse.ts`, `find_presets.ts`, `batch.ts`.
 
-- The camera-count control selects a connected subset of the designed layout
-  (4–8 cameras) or extends the hypothetical southbound corridor (9–16).
-- Completed runs are stored in `data/smartcity_trajectories.sqlite3`. Search
-  saved trajectories by reconstructed trajectory ID or recognized plate from
-  the welcome screen or Trajectory Explorer. If a plate search has no
-  reconstructed trajectory, the lookup also searches all saved raw camera
-  detections and displays their observed camera coordinates without linking
-  them into a vehicle path. Run history shows vehicle, detection, camera, and
-  reconstructed trajectory counts for the 20 most recent runs. Search result
-  limits are shown in the interface. Ground-truth labels are stored in a
-  separate evaluation table.
-- The sidebar can enable multi-frame OCR fusion and control the maximum frame
-  count. It can also inject an unexpected timestamp order at a selected rate;
-  the true route index and anomaly marker are evaluation-only and are excluded
-  from matching features.
-- A global detection failure rate applies to all cameras; overrides can be set
-  per camera. Camera activity reports expected passes, observed detections, and
-  observed misses for the generated scenario.
-- Similar-looking synthetic vehicles can be introduced with a configurable
-  appearance rate. Their embeddings remain distinct but are sampled near an
-  earlier vehicle's appearance vector to create plausible Re-ID ambiguity.
-- The map uses hypothetical coordinates and OpenStreetMap tiles. It does not
-  retrieve a complete local road network. The Trajectory Explorer can request
-  route geometry from the public OSRM service; it falls back to a labelled
-  straight line when routing is unavailable. Either geometry is only an
-  estimate and does not confirm the vehicle's actual path.
-- `data/generated/` receives a per-run export containing synthetic vehicle and
-  detection tables, association decisions, trajectories, embeddings, settings,
-  and evaluation metrics. Combined trajectories cover the full generated run;
-  plate-only and Re-ID-only trajectories, association decisions, and all
-  comparison metrics use the shared evaluation sample. The export metadata
-  records these scopes and detection counts. Exports can also be downloaded as
-  ZIP files from Analytics.
-- Association uses pairwise scores followed by a maximum-weight predecessor/
-  successor assignment. It does not optimize a full trajectory-level score.
-- Three-method comparison and metrics use an even timestamp sample capped at
-  500 detections so methods share one evaluation set. Combined trajectory
-  tracking and SQLite persistence process every generated detection. The
-  dashboard and scenario metadata report both counts separately.
-- Full-run tracking uses a conservative CLM time-window prefilter and solves
-  maximum-weight assignments independently within connected candidate groups,
-  avoiding a single dense assignment matrix for the entire run. Evaluation
-  views retain every candidate decision on the bounded comparison sample.
-- Pair iteration skips detections outside the configured time horizon, Re-ID
-  cosine scores use a NumPy dot product, and camera path profiles are prepared
-  once per graph instead of recomputed for every pair.
-- Analytics reports per-stage processing time for camera/vehicle/detection
-  generation, each association method, trajectory reconstruction, SQLite
-  persistence, evaluation, and scenario export. Association timings apply to
-  the evaluated subset when a run exceeds the 500-detection cap.
+Debug URL parameters: `?preset=N`, `?map=kor`, `?seed=`, `?warm=<sec>`, `?pause=1`, `?sel=<carId>`, `?reveal=1`.
 
-All maps, detections, match scores, and metrics are illustrative synthetic
-outputs, not real-world identification or performance claims.
+## Honesty notes
 
-Evaluation precision and recall are based on exact consecutive detection-ID
-links. A link is correct only when those two specific detections are adjacent
-in the true route sequence for the same synthetic vehicle. Precision is
-`TP / (TP + FP)`, recall is `TP / (TP + FN)`, and F1 is their harmonic mean.
-Incorrect transition rate is `FP / (TP + FP)`; missed transition rate is
-`FN / (TP + FN)`. Trajectory completeness equals recall. Undefined zero-
-denominator rates are reported as zero.
-
-The Analytics tab also offers OCR-error and Re-ID-noise sensitivity sweeps at
-0.0, 0.1, 0.2, and 0.3. Each sweep reuses one synthetic fleet and compares
-combined, plate-only, and Re-ID-only association on the same detections per
-setting. To keep the interactive sweep responsive, it uses up to 75 vehicles
-and evaluates up to 180 detections per setting.
-
-## Model integration roadmap
-
-1. Keep the `Detection` contract and replace synthetic plate observations with
-   a real vehicle detector and pretrained OCR adapter; retain OCR confidence
-   and multiple plate hypotheses.
-2. Replace synthetic appearance vectors with a pretrained vehicle Re-ID
-   adapter that emits normalized embeddings. Do not use dataset identities as
-   live matching features.
-3. Calibrate the camera graph and travel-time distributions using approved
-   operational data; preserve the uncertainty-aware association interface.
-4. Add access controls, retention limits, audit trails, and database migrations
-   before storing real camera data. The current SQLite database is for this
-   synthetic demonstration only.
+* This is a **simulation of the method**, not the full ANPR system. Car movement, camera errors and road speeds are modelled.
+* Error rates are configurable assumptions, not measured accuracy. Typical travel time is assumed to be 0.8 × the (city-traffic) road speed.
+* Look-alike twins are genuinely confusable: the tracker rejects them only when travel time rules them out, so some wrong links remain in busy scenes.
+* The same tracker logic (linking + route inference + suggestion) is what a real system would run on real sightings.

@@ -1,0 +1,13 @@
+import { readFileSync } from 'node:fs';
+import { Graph } from '../src/sim/graph';
+import { makeGridMap } from '../src/sim/gridMap';
+import { runBatch } from '../src/track/eval';
+const which = process.argv[2] ?? 'grid';
+const n = +(process.argv[3] ?? 200);
+const map = which === 'kor' ? { name: 'kor', ...JSON.parse(readFileSync('public/data/koramangala.json', 'utf8')) } : makeGridMap();
+const g = new Graph(map);
+const t0 = Date.now();
+const b = await runBatch(g, [], 0.9, 2026, { nTrips: n, onProgress: (f, l) => process.stderr.write(`\r${(f * 100).toFixed(0)}% ${l}      `) });
+console.log('\nms', Date.now() - t0, 'first suggestion', b.suggestedFirst);
+console.table(b.chart);
+console.log(b.currentRandom, b.currentSmart);
