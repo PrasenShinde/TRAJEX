@@ -88,9 +88,10 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed, nCars, lookalikes, mapData, warm, nonce]);
 
-  // live-tunable noise params
-  engine.setNoise(ocr, partial);
-  engine.setDetectProb(1 - miss);
+  useEffect(() => {
+    engine.setNoise(ocr, partial);
+    engine.setDetectProb(1 - miss);
+  }, [engine, ocr, partial, miss]);
 
   const syncCams = () => { camNodes.current = engine.cameraList().map(c => c.nodeId); setTick(t => t + 1); };
   const onJunctionClick = useCallback((id: string) => { engine.toggleCamera(id); syncCams(); }, [engine]);
