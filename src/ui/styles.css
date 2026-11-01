@@ -1,5 +1,6 @@
 :root { --bg:#0e1116; --panel:#161b22; --line:#2a313c; --txt:#d7dde6; --dim:#8b95a5; --acc:#4cc9f0; --good:#4ade80; --bad:#f87171; --warn:#fbbf24; }
-* { box-sizing: border-box; }
+* { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
+*::-webkit-scrollbar { width: 0; height: 0; display: none; }
 html, body, #root { height: 100%; margin: 0; }
 body { background: var(--bg); color: var(--txt); font: 13px/1.4 system-ui, sans-serif; }
 .app { display: grid; grid-template-columns: 270px 1fr 360px; grid-template-rows: 1fr 200px; height: 100%; }

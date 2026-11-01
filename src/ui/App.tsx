@@ -251,6 +251,7 @@ export function App() {
   return (
     <div className="app">
       <div className="panel left">
+        <h1>TRAJEX</h1>
         <h3>Demo presets</h3>
         <div className="row"><button className={demo ? 'on' : 'primary'} onClick={() => (demo ? setDemo(null) : demoStep(0))}>{demo ? 'Exit demo' : '▶ Demo (guided)'}</button></div>
         <div className="row">
