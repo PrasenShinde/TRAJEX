@@ -1,4 +1,6 @@
-:root { --bg:#0e1116; --panel:#161b22; --line:#2a313c; --txt:#d7dde6; --dim:#8b95a5; --acc:#4cc9f0; --good:#4ade80; --bad:#f87171; --warn:#fbbf24; }
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root { --bg:#0e1116; --panel:#161b22; --line:#2a313c; --txt:#d7dde6; --dim:#8b95a5; --acc:#4cc9f0; --good:#4ade80; --bad:#f87171; --warn:#fbbf24; --font-title: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace; }
 * { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
 *::-webkit-scrollbar { width: 0; height: 0; display: none; }
 html, body, #root { height: 100%; margin: 0; }
@@ -10,13 +12,15 @@ body { background: var(--bg); color: var(--txt); font: 13px/1.4 system-ui, sans-
 .right { grid-column: 3; grid-row: 1; }
 .bottom { grid-column: 2 / 4; grid-row: 2; display: flex; gap: 16px; align-items: stretch; }
 .center .legend { position: absolute; left: 8px; bottom: 8px; font-size: 11px; color: var(--dim); pointer-events: none; background: #0008; padding: 4px 6px; border-radius: 4px; }
-h3 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+h1, h2, h3, .title, .metric .big, .floating b, .card b { font-family: var(--font-title); }
+h1 { margin: 0 0 10px; font-size: 28px; line-height: 1.1; }
+h3 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); font-family: var(--font-title); }
 h3:first-child { margin-top: 0; }
 label { display: block; margin: 6px 0 2px; color: var(--dim); }
 label .v { float: right; color: var(--txt); }
 input[type=range] { width: 100%; }
 input[type=text], input[type=number], select { width: 100%; background: #0e1116; color: var(--txt); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; }
-button { background: #202733; color: var(--txt); border: 1px solid var(--line); border-radius: 4px; padding: 5px 9px; cursor: pointer; margin: 2px 4px 2px 0; }
+button { background: #202733; color: var(--txt); border: 1px solid var(--line); border-radius: 4px; padding: 5px 9px; cursor: pointer; margin: 2px 4px 2px 0; font-family: var(--font-title); }
 button:hover { border-color: var(--acc); }
 button.on { background: #12384a; border-color: var(--acc); }
 button.primary { background: #0e5a78; border-color: var(--acc); }
@@ -24,7 +28,7 @@ button.primary { background: #0e5a78; border-color: var(--acc); }
 table { border-collapse: collapse; width: 100%; font-size: 12px; }
 th, td { text-align: left; padding: 2px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { color: var(--dim); font-weight: 500; }
-.mono { font-family: ui-monospace, monospace; }
+.mono { font-family: var(--font-title); }
 .ok { color: var(--good); } .no { color: var(--bad); } .warn { color: var(--warn); } .dim { color: var(--dim); }
 .chip { display:inline-block; padding: 0 6px; border-radius: 8px; background:#202733; margin-right:4px; }
 .bar { height: 6px; background: var(--acc); border-radius: 3px; }
